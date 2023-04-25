@@ -543,6 +543,7 @@ class Listener_menu(ActionListener):
 	      if (i==JFileChooser.APPROVE_OPTION):
 	        f = fc.getSelectedFile()
 	        path = f.getPath()
+	        prjpath=path
 	        fname = f.getName()
 	        if (f.canRead() and f.isFile()):
 	          if (current_stack):
@@ -559,6 +560,7 @@ class Listener_menu(ActionListener):
 	            if (load_dict["isThresholded"].lower() in ["true", "1", "yes"]):
 	              current_stack.load_Threshold_ROIs(load_dict["Threshold_ROIs"])
 	          current_stack.setSaved()
+	          current_stack.setPrjPath(prjpath)
 	        else:
 	          nofile_dialog.dialog.setVisible(True)
 
@@ -804,7 +806,9 @@ class stack_processing(object):
     self.main_frame = main_frame
     self.filepath = path
     self.filename = fname
-    self.just_path=os.sep.join(self.filepath.split(os.sep)[:-1])+os.sep
+    self.PrjPath=""
+    self.just_PrjPath=""
+    self.setPrjPath(path)    
     self.image_plus=IJ.openImage(path)
     self.stack=self.image_plus.getStack()
     self.hyperstack=self.image_plus.isHyperStack()
@@ -978,6 +982,10 @@ class stack_processing(object):
     self.unsaved=False
   def setUnsaved(self):
     self.unsaved=True
+    
+  def setPrjPath(self, path):
+    self.PrjPath=path
+    self.just_PrjPath=os.sep.join(self.PrjPath.split(os.sep)[:-1])+os.sep
 
   def isThresholded(self):
     return self.thresholded
@@ -1057,7 +1065,7 @@ class stack_processing(object):
         roi_name=roi.getName()
         roi_idx.append(rm.getIndex(roi_name))
       rm.setSelectedIndexes(roi_idx)
-      roi_fname=self.just_path+"".join(current_stack.filename.split(".")[:-1])+file_suffix#"_th_ch"+str(th_channel+1)+"_ROIs"
+      roi_fname=self.just_PrjPath+"".join(current_stack.filename.split(".")[:-1])+file_suffix#"_th_ch"+str(th_channel+1)+"_ROIs"
       if (len(roi_idx)>1):
         roi_fname=roi_fname+".zip"
       elif (len(roi_idx)==1):
@@ -1081,7 +1089,7 @@ class stack_processing(object):
           res_Tab.setValue(scaled_area,i+row_offset,res_Tab.getValue("Area",i+row_offset)*self.area_to_um2)
           res_Tab.setLabel(labels_list[i], i+row_offset)
         res_Tab.show(table_name)
-        roi_fname=self.just_path+"".join(current_stack.filename.split(".")[:-1])+file_suffix+".csv"
+        roi_fname=self.just_PrjPath+"".join(current_stack.filename.split(".")[:-1])+file_suffix+".csv"
         res_Tab.save(roi_fname)
         IJ.log("Saved measurements results in the file "+ roi_fname)
 
@@ -1388,6 +1396,7 @@ class stack_processing(object):
     with open(pathname, 'w') as fp:
       json.dump(save_dict, fp, sort_keys=False, indent=4)
     self.setSaved()
+    self.setPrjPath(pathname)
     IJ.log("Saved the project '"+self.stackname+"' in the file " + pathname)
 
 
