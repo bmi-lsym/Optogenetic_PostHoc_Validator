@@ -278,7 +278,14 @@ class erode_dilate_dialog():
   def button_pressed(self):
     for i in range(self.n_slices):
       self.imp.setSlice(i+1)
+      pf=Prefs()
+      black_back=0
+      if (pf.blackBackground): #temporarily change background settings to non_black if blackBackground
+        black_back=1
+        IJ.run("Options...", "iterations=1 count=1")
       IJ.run(self.imp, "Create Selection", "")
+      if (black_back): #revert to previous settings after thresholding done
+        IJ.run("Options...", "iterations=1 count=1 black")
       #IJ.run(self.imp, "Make Inverse", "")
       roi = self.imp.getRoi().getInverse(self.imp)
       if (roi is None):
@@ -892,6 +899,9 @@ class stack_processing(object):
     if (rm==None):
       rm = RoiManager()
     rm.reset()
+        
+    self.rm_ROIs_ovl=0  
+    self.rm_ROIs_names=0
 
     self.previous_rois=[]
     previous_overlay=self.image_plus.getOverlay()
@@ -900,7 +910,15 @@ class stack_processing(object):
       self.previous_rois=list(previous_overlay.toArray())
       previous_overlay.clear()
       previous_overlay=None
-      IJ.log("Image contained overlay which was converted to ROI(s).")
+      IJ.log("Image contained overlay which was converted to ROI(s).")   
+      pf=Prefs()
+      if(pf.showAllSliceOnly==False): #check ROIs preferences and temporarily change if Z plane is not respected
+        self.rm_ROIs_ovl=1
+        rm.runCommand("Associate", "true")
+      if(pf.useNamesAsLabels==False): #check ROIs preferences and temporarily change if Z plane is not respected
+        self.rm_ROIs_names=1
+        rm.runCommand("UseNames", "true")        
+    
     
     self.overlay=Overlay()
     self.overlay.clear()
@@ -1638,6 +1656,15 @@ class stack_processing(object):
     #self.image_plus.killStack()
     #self.imp.flush()
     #rm.runCommand('reset')
+      rm = RoiManager.getInstance()
+      if (rm==None):
+        rm = RoiManager()
+      if (self.rm_ROIs_ovl==1): #revert the ROI display preference
+        self.rm_ROIs_ovl=0
+        rm.runCommand("Associate", "false")
+      if (self.rm_ROIs_names==1): #revert the ROI display preference
+        self.rm_ROIs_names=0
+        rm.runCommand("UseNames", "false")
       if (self.threshold_channel is not None):
         self.threshold_channel.close()
       IJ.log("Closed project '"+self.stackname+"' and associated data.")
