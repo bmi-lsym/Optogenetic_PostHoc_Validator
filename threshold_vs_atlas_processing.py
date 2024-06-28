@@ -7,13 +7,20 @@ Created on Sun Apr  9 21:27:39 2023
 
 
 import pandas as pd
+import os
+import fnmatch
 
 # Set the folder path to the .csv file created by the fiber_cone tool
 fpath="D:\\Data\\Folder\\"
 # Set the suffix of the .csv filenames
 ftype="_aligned_th_x_ROIs.csv"
+
 # Generate the list of file prefixes
-fprefix=["jy"+str(i+1).zfill(2) for i in range(17)]
+fnames_all=os.listdir(fpath)
+fnames=[fn for fn in fnames_all if fnmatch.fnmatch(fn,"*"+ftype)]
+#fprefix=["jy"+str(i+1).zfill(2) for i in range(17)]
+fprefix=[fn.replace(ftype, "") for fn in fnames]
+print("Found",len(fnames),"data files with the respective prefixes:", fprefix,"\n")
 
 df_pooled=pd.DataFrame()
 
